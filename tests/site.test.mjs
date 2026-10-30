@@ -11,7 +11,8 @@ const built = existsSync(join(dist, 'index.html'));
 function htmlFiles(dir) {
   return readdirSync(dir).flatMap((f) => {
     const p = join(dir, f);
-    return statSync(p).isDirectory() ? htmlFiles(p) : f.endsWith('.html') ? [p] : [];
+    // Search Console verification files (googleXXXX.html) are not pages.
+    return statSync(p).isDirectory() ? htmlFiles(p) : f.endsWith('.html') && !/^google[0-9a-f]+\.html$/.test(f) ? [p] : [];
   });
 }
 const pathOf = (file) => '/' + relative(dist, file).replace(/index\.html$/, '');

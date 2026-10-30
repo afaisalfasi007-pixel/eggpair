@@ -84,6 +84,8 @@ If the Pages GitHub connection doesn't work, the same site can be served by Work
 
 ## Google Search Console
 
+The verification file `src/static/googlecd181ec0e3da8d20.html` is published at the site root; keep it so the site stays verified. Anything in `src/static/` is copied to the site as is.
+
 1. Open <https://search.google.com/search-console> and add a **URL prefix** property with your full address (for example `https://afaisalfasi007-pixel.github.io/eggpair/`).
 2. Choose **HTML tag**, copy only the `content="…"` value, set it as `GOOGLE_SITE_VERIFICATION` in Cloudflare, redeploy, then press **Verify**.
 3. Go to **Sitemaps** and submit `sitemap.xml`.

@@ -1,6 +1,6 @@
 // Builds the whole site into dist/. Run with `npm run build`.
 
-import { readFileSync, writeFileSync, mkdirSync, rmSync, copyFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, rmSync, copyFileSync, cpSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -49,6 +49,8 @@ writeFileSync(join(dist, 'assets/breeding.js'), lib);
 writeFileSync(join(dist, 'assets/app.js'), app);
 writeFileSync(join(dist, 'assets/data.json'), clientData);
 copyFileSync(join(root, 'src/assets/favicon.svg'), join(dist, 'favicon.svg'));
+// Files copied to the site root as they are, e.g. Google Search Console's verification file.
+cpSync(join(root, 'src/static'), dist, { recursive: true });
 copyFileSync(join(root, 'src/assets/_headers'), join(dist, '_headers'));
 
 const assets = { css: `/assets/style.css?v=${hash(css)}`, js: `/assets/app.js?v=${hash(app)}` }; // base added by withBase

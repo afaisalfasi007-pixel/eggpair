@@ -28,8 +28,8 @@ test('every page has a title, description, canonical and one h1', { skip: !built
   for (const p of pages) {
     const title = get(p.html, /<title>([^<]*)<\/title>/);
     const desc = get(p.html, /<meta name="description" content="([^"]*)"/);
-    assert.ok(title && title.length >= 10 && title.length <= 90, `${p.path} title "${title}"`);
-    assert.ok(desc && desc.length >= 50 && desc.length <= 200, `${p.path} description length ${desc?.length}`);
+    assert.ok(title && title.length >= 10 && title.length <= 70, `${p.path} title (${title?.length}) "${title}"`);
+    assert.ok(desc && desc.length >= 50 && desc.length <= 160, `${p.path} description length ${desc?.length}`);
     assert.equal((p.html.match(/<h1[\s>]/g) || []).length, 1, `${p.path} h1 count`);
     if (p.path !== '/404.html') {
       assert.equal(get(p.html, /<link rel="canonical" href="([^"]*)"/), config.url + p.path, `${p.path} canonical`);
@@ -95,4 +95,37 @@ test('no ads or analytics load unless configured', { skip: !built }, () => {
   const home = pages.find((p) => p.path === '/').html;
   if (!config.ads.enabled) assert.doesNotMatch(home, /adsbygoogle/);
   if (!config.cloudflareAnalyticsToken) assert.doesNotMatch(home, /cloudflareinsights/);
+});
+
+test('every page has social sharing tags and the share image exists', { skip: !built }, () => {
+  assert.ok(existsSync(join(dist, 'og-image.png')), 'og-image.png is published');
+  for (const p of pages) {
+    for (const tag of ['og:title', 'og:description', 'og:url', 'og:image']) {
+      assert.match(p.html, new RegExp(`property="${tag}"`), `${p.path} missing ${tag}`);
+    }
+    assert.match(p.html, /name="twitter:card" content="summary_large_image"/, p.path);
+    assert.ok(p.html.includes(`content="${config.url}/og-image.png"`), `${p.path} og:image is not absolute`);
+  }
+});
+
+test('content pages needed for ad networks exist and are linked from every page', { skip: !built }, () => {
+  for (const path of ['/about/', '/contact/', '/privacy/', '/terms/', '/disclaimer/', '/data-sources/']) {
+    assert.ok(pages.some((p) => p.path === path), `${path} is missing`);
+  }
+  for (const p of pages) {
+    for (const link of ['/about/', '/privacy/', '/terms/', '/contact/']) {
+      assert.ok(p.html.includes(`href="${base}${link}"`), `${p.path} does not link to ${link}`);
+    }
+  }
+});
+
+test('Google Analytics only appears when a Measurement ID is configured', { skip: !built }, () => {
+  const home = pages.find((p) => p.path === '/').html;
+  if (!config.ga4MeasurementId) {
+    assert.doesNotMatch(home, /googletagmanager|analytics\.js|gtag/);
+    assert.ok(!existsSync(join(dist, 'assets/analytics.js')));
+  } else {
+    assert.match(home, /analytics\.js/);
+    assert.doesNotMatch(home, /googletagmanager\.com\/gtag\/js/, 'gtag.js must not load before consent');
+  }
 });

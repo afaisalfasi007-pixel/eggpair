@@ -8,8 +8,9 @@ export function pages({ config, meta, pals, counts, selfOnly, genderedRows, pair
     {
       path: '/guide/how-breeding-works/',
       crumb: 'How breeding works',
-      title: 'How Palworld Breeding Works (1.0): Breeding Power Explained',
-      description: 'A plain-English guide to Palworld breeding: breeding power, how the child is chosen, special combos, gender rules and what to do when a Pal only breeds from itself.',
+      article: true,
+      title: 'How Palworld Breeding Works (1.0): Breeding Power',
+      description: 'A plain-English guide to Palworld breeding: breeding power, how the child is chosen, special combos, gender rules and Pals that only breed from themselves.',
       body: `
 <h1>How Palworld breeding works</h1>
 <p class="lead">Breeding looks random at first, but the species of the egg is fully predictable. This guide explains the rule the game uses, the exceptions, and how to use it to plan.</p>
@@ -117,6 +118,7 @@ export function pages({ config, meta, pals, counts, selfOnly, genderedRows, pair
 <p>${name} has no accounts and no database of users. Your My Pals list is saved in your own browser's local storage. It never leaves your device unless you export it yourself. Clearing your browser data deletes it.</p>
 <h2>Hosting and analytics</h2>
 <p>The site is served by a hosting provider that processes standard request data (such as IP address and browser type) to deliver pages and protect against abuse.${config.cloudflareAnalyticsToken ? ' We use Cloudflare Web Analytics to count visits. It does not use cookies or track you across sites.' : ''}</p>
+${config.ga4MeasurementId ? '<h2>Google Analytics</h2><p>If you accept analytics cookies in the banner, we use Google Analytics 4 to count visits and see which tools are used (for example which Pals are looked up). Google may set cookies and receives your IP address and device information, as described in <a href="https://policies.google.com/technologies/partner-sites" rel="noopener">Google\'s policy</a>. Nothing is sent to Google, and its script is not loaded, unless you accept. You can change your choice any time with "Cookie settings" in the footer.</p>' : ''}
 <h2>Advertising</h2>
 <p>${config.ads.enabled ? 'This site shows ads from Google. Google and its partners may use cookies to show ads based on your visits to this and other sites. You can manage personalised ads at <a href="https://adssettings.google.com" rel="noopener">Google Ads Settings</a>. Visitors in some regions are asked for consent before personalised ads are shown.' : 'The site does not show ads at the moment. If that changes, this policy will be updated first and will explain the ad provider and its cookies.'}</p>
 <h2>Affiliate links</h2>
@@ -132,8 +134,36 @@ export function pages({ config, meta, pals, counts, selfOnly, genderedRows, pair
 <h1>Contact</h1>
 ${config.contactEmail
     ? `<p>Email: <a href="mailto:${esc(config.contactEmail)}">${esc(config.contactEmail)}</a></p>`
-    : '<p>A contact address will be added here soon.</p>'}
+    : ''}
+<p>Report a wrong result or suggest an improvement on our <a href="https://github.com/afaisalfasi007-pixel/eggpair/issues" rel="noopener">GitHub issues page</a> (free GitHub account needed).</p>
 <p>To report a wrong result, please include both parents, their genders, the child you got in game, and your game version. That helps us check it quickly.</p>`,
+    },
+    {
+      path: '/terms/',
+      title: 'Terms of Use',
+      description: `The terms for using ${config.name}: what the site is for, accuracy, acceptable use, third-party content and changes.`,
+      body: `
+<h1>Terms of use</h1>
+<p>Last updated: ${esc(meta.importedOn)}</p>
+<p>By using ${name} you agree to these terms. If you do not agree, please do not use the site.</p>
+<h2>What the site is</h2>
+<p>${name} is a free, unofficial fan tool that shows Palworld breeding results and related game information. It is for personal, non-commercial use by players.</p>
+<h2>Accuracy</h2>
+<p>We work to keep the data correct and show the game version on every page (see <a href="/data-sources/">data sources</a>), but game updates can change results. The site is provided "as is", without warranties. Check important decisions in the game itself.</p>
+<h2>Acceptable use</h2>
+<ul>
+  <li>Do not try to disrupt the site or overload it with automated requests.</li>
+  <li>Do not copy the site's original text wholesale and present it as your own. Short quotes with a link back are fine.</li>
+  <li>The breeding data comes from an open-source project under the MIT licence; its licence is kept at <a href="/data-sources/">data sources</a>.</li>
+</ul>
+<h2>Game content and trademarks</h2>
+<p>Palworld, its Pals and related names and marks belong to Pocketpair, Inc. and other owners. ${name} is not affiliated with or endorsed by them.</p>
+<h2>Links to other sites</h2>
+<p>We may link to other websites. We do not control them and are not responsible for their content or practices.</p>
+<h2>Changes</h2>
+<p>We may update these terms and the site at any time. Continued use after a change means you accept the updated terms.</p>
+<h2>Contact</h2>
+<p>Questions about these terms: see the <a href="/contact/">contact page</a>.</p>`,
     },
     {
       path: '/disclaimer/',

@@ -15,6 +15,11 @@ export default {
   // Cloudflare Web Analytics token (free, no cookies). Empty = no analytics.
   cloudflareAnalyticsToken: process.env.CF_ANALYTICS_TOKEN || '',
 
+  // Google Analytics 4 Measurement ID (looks like G-XXXXXXXXXX). Leave empty until you
+  // create a GA4 property; nothing loads without it. Visitors must accept analytics
+  // cookies in the consent banner before anything is sent to Google.
+  ga4MeasurementId: /^G-[A-Z0-9]{6,12}$/.test(process.env.GA_MEASUREMENT_ID || '') ? process.env.GA_MEASUREMENT_ID : '',
+
   // Google Search Console HTML-tag verification code (the content="..." value).
   googleSiteVerification: process.env.GOOGLE_SITE_VERIFICATION || '',
 

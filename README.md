@@ -82,11 +82,26 @@ If the Pages GitHub connection doesn't work, the same site can be served by Work
 | `GOOGLE_SITE_VERIFICATION` | Code for Google Search Console's "HTML tag" method. |
 | `ADS_ENABLED`, `ADSENSE_CLIENT`, `AD_SLOT_BELOW_TOOL`, `AD_SLOT_IN_CONTENT` | Only after an ad network approves you. See below. |
 
+## Google Analytics 4 (optional, off until you set an ID)
+
+1. Create a GA4 property at <https://analytics.google.com> and copy its **Measurement ID** (looks like `G-` plus letters/digits). Never use a made-up ID.
+2. GitHub: this repository → **Settings → Secrets and variables → Actions → Variables → New repository variable**. Name `GA_MEASUREMENT_ID`, value your ID. (It is public by design, so a variable is fine.)
+3. **Actions → Check and deploy → Run workflow**.
+
+What happens: a small banner asks visitors to accept or decline analytics cookies. Nothing is sent to Google, and Google's script is not even downloaded, until they accept. Events sent after consent: `calculator_result`, `find_parents`, `plan_route`, `my_pals_update`, plus normal page views. Visitors can change their choice with "Cookie settings" in the footer. The privacy page describes this automatically.
+
+For local testing use `GA_MEASUREMENT_ID=G-YOURID npm run build`.
+
+## More checklists
+
+- [`docs/indexing-checklist.md`](docs/indexing-checklist.md): Google indexing and URL Inspection.
+- [`docs/adsense-readiness.md`](docs/adsense-readiness.md): AdSense requirements and what is still missing.
+
 ## Google Search Console
 
 The verification file `src/static/googlecd181ec0e3da8d20.html` is published at the site root; keep it so the site stays verified. Anything in `src/static/` is copied to the site as is.
 
-1. Open <https://search.google.com/search-console> and add a **URL prefix** property with your full address (for example `https://afaisalfasi007-pixel.github.io/eggpair/`).
+1. Open <https://search.google.com/search-console> and add a **URL prefix** property with your full address (for example `https://afaisalfasi007-pixel.github.io/eggpair/`). On GitHub Pages the sitemap is `https://afaisalfasi007-pixel.github.io/eggpair/sitemap.xml`; `robots.txt` is only read by Google at the host root, so it has no effect until the site has its own domain.
 2. Choose **HTML tag**, copy only the `content="…"` value, set it as `GOOGLE_SITE_VERIFICATION` in Cloudflare, redeploy, then press **Verify**.
 3. Go to **Sitemaps** and submit `sitemap.xml`.
 4. Check **Pages** after a few days to see what Google indexed. New sites often take weeks; nothing here guarantees indexing or rankings.

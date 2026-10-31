@@ -1,5 +1,8 @@
 name: Check and deploy
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [main]
@@ -28,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: 81b79b1e00dfc12b2bef0a7452fdbab9
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - name: Skip when no Cloudflare token is set
         if: env.CLOUDFLARE_API_TOKEN == ''
@@ -57,6 +60,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && !github.event.repository.private
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
@@ -64,6 +68,9 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     env:
       SITE_URL: https://afaisalfasi007-pixel.github.io/eggpair
+      # Repository variable (Settings > Secrets and variables > Actions > Variables).
+      # Empty until you create a GA4 property; then analytics turns on after consent.
+      GA_MEASUREMENT_ID: ${{ vars.GA_MEASUREMENT_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

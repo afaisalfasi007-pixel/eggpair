@@ -397,3 +397,11 @@ tbody tr:last-child td, tbody tr:last-child th { border-bottom: 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* ---------- analytics consent (only exists when GA4 is configured) ---------- */
+.consent { position: fixed; left: 12px; right: 12px; bottom: calc(var(--tabbar-h) + 12px + env(safe-area-inset-bottom)); z-index: 70; display: grid; gap: 10px; padding: 14px 16px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-lg); max-width: 560px; margin-inline: auto; }
+.consent p { margin: 0; font-size: .92rem; }
+.consent-btns { display: flex; gap: 8px; justify-content: flex-end; }
+@media (min-width: 820px) { .consent { bottom: 20px; left: 20px; right: auto; } }
+.link-btn { background: none; border: 0; padding: 0; min-height: 40px; font: inherit; font-weight: 600; color: var(--text); cursor: pointer; }
+.link-btn:hover { color: var(--brand); }

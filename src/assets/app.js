@@ -45,6 +45,10 @@ const sexTag = (g) => (g ? `<span class="sex sex-${g}">${GENDER[g]}</span>` : ''
 const emptyState = (ic, text) => `<div class="empty"><svg class="i i-lg" aria-hidden="true"><use href="#i-${ic}"/></svg><p>${text}</p></div>`;
 const pairItem = (left, op, right) => `<li class="pair"><span class="side">${left}</span><span class="op">${icon(op)}</span><span class="side">${right}</span></li>`;
 
+// Analytics events. analytics.js defines eggpairTrack only when GA4 is configured, and
+// it sends nothing unless the visitor accepted analytics cookies.
+const track = (name, params) => { try { if (window.eggpairTrack) window.eggpairTrack(name, params); } catch { /* never break the page */ } };
+
 let toastTimer;
 function toast(msg) {
   const el = document.getElementById('toast');
@@ -166,9 +170,15 @@ function initCalc(data) {
   const { pals } = data;
   const out = document.getElementById('calc-result');
   let a = null, b = null;
+  let lastKey = '';
 
   function render() {
     setParams({ a: a != null ? pals[a].slug : null, b: b != null ? pals[b].slug : null });
+    if (a != null && b != null && `${a}-${b}` !== lastKey) {
+      lastKey = `${a}-${b}`;
+      const r0 = childOf(data, a, b);
+      track('calculator_result', { parent_a: pals[a].name, parent_b: pals[b].name, gender_dependent: r0.child == null });
+    }
     if (a == null || b == null) {
       out.innerHTML = emptyState('egg', a == null && b == null ? 'Choose two Pals to see their egg.' : 'Now choose the other parent.');
       return;
@@ -196,6 +206,7 @@ function initCalc(data) {
   b = indexOfSlug(pals, params.get('b'));
   if (a != null) pa.set(a, false);
   if (b != null) pb.set(b, false);
+  if (a != null && b != null) lastKey = `${a}-${b}`; // a shared link is not a new calculation
   render();
 }
 
@@ -232,7 +243,10 @@ function initFind(data) {
     if (more) more.addEventListener('click', () => { shown += 100; render(); });
   }
 
-  const picker = makePicker(document.querySelector('[data-role="t"]'), pals, (i) => { target = i; shown = 50; render(); });
+  const picker = makePicker(document.querySelector('[data-role="t"]'), pals, (i) => {
+    target = i; shown = 50; render();
+    if (i != null) track('find_parents', { target: pals[i].name });
+  });
   onlyOwned.addEventListener('change', () => { shown = 50; render(); });
   filter.addEventListener('input', () => { shown = 50; render(); });
   target = indexOfSlug(pals, params.get('t'));
@@ -278,7 +292,10 @@ function initPlanner(data) {
       '<p class="muted small">Each step needs one male and one female parent. Pals bred in earlier steps can be reused.</p>';
   }
 
-  const picker = makePicker(document.querySelector('[data-role="t"]'), pals, (i) => { target = i; render(); });
+  const picker = makePicker(document.querySelector('[data-role="t"]'), pals, (i) => {
+    target = i; render();
+    if (i != null) track('plan_route', { target: pals[i].name, owned_count: loadOwned().size });
+  });
   target = indexOfSlug(pals, params.get('t'));
   if (target != null) picker.set(target, false);
   render();
@@ -299,6 +316,7 @@ function initMyPals() {
   };
   const persist = () => {
     update();
+    track('my_pals_update', { owned_count: owned.size });
     if (!saveOwned(owned)) toast('Your browser blocked saving. Ticks will be lost when you leave.');
   };
   for (const b of boxes) {

@@ -53,7 +53,9 @@ copyFileSync(join(root, 'src/assets/favicon.svg'), join(dist, 'favicon.svg'));
 cpSync(join(root, 'src/static'), dist, { recursive: true });
 copyFileSync(join(root, 'src/assets/_headers'), join(dist, '_headers'));
 
-const assets = { css: `/assets/style.css?v=${hash(css)}`, js: `/assets/app.js?v=${hash(app)}` }; // base added by withBase
+const analytics = readFileSync(join(root, 'src/assets/analytics.js'), 'utf8');
+if (config.ga4MeasurementId) writeFileSync(join(dist, 'assets/analytics.js'), analytics);
+const assets = { css: `/assets/style.css?v=${hash(css)}`, js: `/assets/app.js?v=${hash(app)}`, analytics: `/assets/analytics.js?v=${hash(analytics)}` }; // base added by withBase
 
 // ---------- page writing ----------
 
@@ -88,6 +90,9 @@ const selfOnly = pals.map((p, i) => i).filter((i) => counts[i] === 0).sort(byNam
 const genderedRows = breeding.gendered.map(([a, ga, b, gb, c]) => ({ a, ga, b, gb, c }));
 const genderWord = { M: 'male', F: 'female' };
 const pairText = (o) => `${pals[o.a].name}${o.ga ? ` (${genderWord[o.ga]})` : ''} + ${pals[o.b].name}${o.gb ? ` (${genderWord[o.gb]})` : ''}`;
+
+/** First candidate that fits `max` characters; the last one is used as is if none fit. */
+const fit = (max, ...candidates) => candidates.find((c) => c.length <= max) ?? candidates.at(-1);
 
 const toolShell = (id, inner) => `<section class="card tool" id="${id}">${inner}
 <noscript><p class="note">${icon('info')}<span>This tool needs JavaScript. Every result is also listed on the <a href="/pals/">Pal pages</a>, which work without it.</span></p></noscript></section>`;
@@ -222,6 +227,7 @@ writePage({
   scripts: true,
   title: 'My Pals: Track Your Palworld Collection',
   description: 'Tick the Palworld Pals you own. Your list is saved on your device and used by the breeding planner and parent finder. No sign-up.',
+  jsonLd: [webApp(`${config.name} My Pals`, '/my-pals/', 'Tick the Palworld Pals you own; the list is saved in your browser.')],
   body: html`
 ${hero('', 'My Pals', 'Tick the Pals you own. The list is saved in this browser only (no account, nothing sent to us) and powers the <a href="/planner/">planner</a> and the parent finder filter.')}
 <section class="card tool" id="mypals">
@@ -318,10 +324,14 @@ function palPage(i) {
   return {
     path: palPath(p),
     pageType: 'pal',
-    title: counts[i] === 0 ? `How to Breed ${p.name} in Palworld (Only From Two ${p.name})` : `How to Breed ${p.name} in Palworld: ${counts[i] <= 4 ? 'Special Combo' : `All ${counts[i].toLocaleString('en-US')} Combos`}`,
+    title: (() => {
+      const what = counts[i] === 0 ? 'Only From Two ' + p.name : counts[i] <= 4 ? 'Special Combo' : `All ${counts[i].toLocaleString('en-US')} Combos`;
+      // Short enough that the site name still fits in a search result when possible.
+      return fit(50, `How to Breed ${p.name} in Palworld: ${what}`, `Breed ${p.name} in Palworld: ${what}`, `Breed ${p.name}: ${what}`);
+    })(),
     description: counts[i] === 0
-      ? `${p.name} can only be bred from two ${p.name} in Palworld. See its breeding power, stats, work suitability and what it hatches with every other Pal.`
-      : `Every Palworld breeding combo for ${p.name}${gendered.length ? ' (gender matters)' : ''}: ${counts[i].toLocaleString('en-US')} parent pair${counts[i] === 1 ? '' : 's'}, breeding power ${p.power}, stats and work suitability. 1.0 data.`,
+      ? fit(160, `${p.name} can only be bred from two ${p.name} in Palworld. See its breeding power, stats, work suitability and what it hatches with every other Pal.`, `${p.name} can only be bred from two ${p.name} in Palworld. See its breeding power, stats and what it hatches with every other Pal.`)
+      : fit(160, `Every Palworld breeding combo for ${p.name}${gendered.length ? ' (gender matters)' : ''}: ${counts[i].toLocaleString('en-US')} parent pair${counts[i] === 1 ? '' : 's'}, breeding power ${p.power}, stats and work suitability. 1.0 data.`, `Every Palworld breeding combo for ${p.name}${gendered.length ? ' (gender matters)' : ''}: ${counts[i].toLocaleString('en-US')} parent pair${counts[i] === 1 ? '' : 's'}, breeding power ${p.power}, stats and work suitability.`, `Palworld breeding combos for ${p.name}: ${counts[i].toLocaleString('en-US')} parent pair${counts[i] === 1 ? '' : 's'}, breeding power ${p.power} and stats.`),
     jsonLd: [crumbs.ld],
     body: html`
 ${crumbs.nav}
@@ -358,7 +368,7 @@ ${p.collab ? `<p class="note">${icon('info')}<span>Collaboration Pals come from 
       ? pairList(parentItems)
       : html`${pairList(parentItems.slice(0, LIMIT))}
 <details class="more"><summary>${icon('chevron')}<span>Show all ${parents.length.toLocaleString('en-US')} pairs</span></summary>${pairList(parentItems.slice(LIMIT))}</details>`}
-  <p class="muted small">Pairs are listed by Paldeck number. Each pair needs one male and one female.</p>
+  <p class="muted small">Pairs are listed by Paldeck number. Each pair needs one male and one female. New to breeding? Read <a href="/guide/how-breeding-works/">how breeding power works</a>.</p>
 </section>
 ${adSlot(config.ads.slots?.inContent)}
 <section id="offspring">
@@ -409,13 +419,20 @@ for (let i = 0; i < pals.length; i++) writePage(palPage(i));
 
 // ---------- guide and info pages ----------
 
-const article = (path, title, description, body, crumbsLabel) => {
+const article = (path, title, description, body, crumbsLabel, extraLd = []) => {
   const crumbs = breadcrumbs([['/', 'Home'], [path, crumbsLabel || title]]);
-  writePage({ path, title, description, jsonLd: [crumbs.ld], body: html`${crumbs.nav}<article class="prose">${body}</article>` });
+  writePage({ path, title, description, jsonLd: [crumbs.ld, ...extraLd], body: html`${crumbs.nav}<article class="prose">${body}</article>` });
 };
 
 const ctx = { config, meta, pals, counts, selfOnly, genderedRows, pairText, palLink, esc };
-for (const page of content.pages(ctx)) article(page.path, page.title, page.description, page.body, page.crumb);
+const publisher = { '@type': 'Organization', name: config.name, url: absUrl('/') };
+for (const page of content.pages(ctx)) {
+  const ld = page.article ? [{
+    '@context': 'https://schema.org', '@type': 'Article', headline: page.title, description: page.description,
+    dateModified: meta.importedOn, mainEntityOfPage: absUrl(page.path), author: publisher, publisher,
+  }] : [];
+  article(page.path, page.title, page.description, page.body, page.crumb, ld);
+}
 
 writePage({
   path: '/404',

@@ -64,7 +64,11 @@ export function adSlot(slotId) {
  */
 export function layout(page, assets) {
   const canonical = absUrl(page.path);
-  const title = page.title.includes(config.name) ? page.title : `${page.title} | ${config.name}`;
+  // Add the site name only when the whole title still fits a search result (~60 characters).
+  const suffix = ` | ${config.name}`;
+  const title = page.title.includes(config.name) || page.title.length + suffix.length > 60 ? page.title : page.title + suffix;
+  const ogImage = `${config.url}/og-image.png`;
+  const ga = config.ga4MeasurementId;
   const ld = (page.jsonLd || []).map((j) => `<script type="application/ld+json">${JSON.stringify(j).replace(/</g, '\\u003c')}</script>`).join('\n');
   const isCurrent = (href) => (href === '/' ? page.path === '/' : page.path.startsWith(href));
   const topNav = NAV.map(([href, label]) => `<a href="${href}"${isCurrent(href) ? ' aria-current="page"' : ''}>${label}</a>`).join('');
@@ -84,11 +88,20 @@ ${page.noindex ? '<meta name="robots" content="noindex">' : ''}
 <meta property="og:title" content="${esc(page.title)}">
 <meta property="og:description" content="${esc(page.description)}">
 <meta property="og:url" content="${canonical}">
-<meta name="twitter:card" content="summary">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="${ogImage}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="${esc(config.name)}: Palworld breeding calculator">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${esc(page.title)}">
+<meta name="twitter:description" content="${esc(page.description)}">
+<meta name="twitter:image" content="${ogImage}">
 <meta name="theme-color" content="#f4f6fb" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0a0f1c" media="(prefers-color-scheme: dark)">
 ${config.googleSiteVerification ? `<meta name="google-site-verification" content="${esc(config.googleSiteVerification)}">` : ''}
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+${page.path === '/' ? '<link rel="sitemap" type="application/xml" href="/sitemap.xml">' : ''}
 <link rel="stylesheet" href="${assets.css}">
 ${ld}
 ${config.ads.enabled && config.ads.adsenseClient ? `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${esc(config.ads.adsenseClient)}" crossorigin="anonymous"></script>` : ''}
@@ -113,14 +126,16 @@ ${page.body}
       <a href="/about/">About</a>
       <a href="/data-sources/">Data sources</a>
       <a href="/privacy/">Privacy</a>
+      <a href="/terms/">Terms</a>
       <a href="/contact/">Contact</a>
-      <a href="/disclaimer/">Disclaimer</a>
+      <a href="/disclaimer/">Disclaimer</a>${ga ? '\n      <button type="button" class="link-btn" data-consent-settings>Cookie settings</button>' : ''}
     </nav>
     <p class="fine">${esc(config.name)} is an unofficial fan tool. It is not affiliated with or endorsed by Pocketpair. Palworld and all related names are trademarks of their owners.</p>
   </div>
 </footer>
 <nav class="tabbar" aria-label="Main (mobile)">${tabNav}</nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+${ga ? `<script defer src="${assets.analytics}" data-id="${esc(ga)}"></script>` : ''}
 ${page.scripts ? `<script type="module" src="${assets.js}"></script>` : ''}
 ${config.cloudflareAnalyticsToken ? `<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='${JSON.stringify({ token: config.cloudflareAnalyticsToken })}'></script>` : ''}
 </body>

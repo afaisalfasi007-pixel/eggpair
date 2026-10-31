@@ -1,5 +1,6 @@
 // Tiny static server for previewing dist/ locally: npm run serve
 import { createServer } from 'node:http';
+import { gzipSync } from 'node:zlib';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import config from '../site.config.mjs';
@@ -18,8 +19,15 @@ export function start(p = port) {
     try {
       if ((await stat(file)).isDirectory()) file = join(file, 'index.html');
       const body = await readFile(file);
-      res.writeHead(200, { 'content-type': types[extname(file)] || 'application/octet-stream' });
-      res.end(body);
+      const type = types[extname(file)] || 'application/octet-stream';
+      // Compress text like GitHub Pages does, so local timings are realistic.
+      if (/^(text|application\/(json|xml))|svg/.test(type) && /gzip/.test(req.headers['accept-encoding'] || '')) {
+        res.writeHead(200, { 'content-type': type, 'content-encoding': 'gzip', vary: 'accept-encoding' });
+        res.end(gzipSync(body));
+      } else {
+        res.writeHead(200, { 'content-type': type });
+        res.end(body);
+      }
     } catch {
       res.writeHead(404, { 'content-type': types['.html'] });
       res.end(await readFile(join(root, '404.html')).catch(() => 'Not found'));

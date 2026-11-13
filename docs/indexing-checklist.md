@@ -43,6 +43,13 @@ The other Pal pages are found through the sitemap and the directory page; do not
 
 ## Check every 3–7 days
 
-1. Search Console → **Sitemaps**: status "Success", discovered pages ≈ 311.
+1. Search Console → **Sitemaps**: status "Success", discovered pages ≈ 322.
 2. **Pages**: how many are indexed; read the reasons for the rest.
 3. **Performance**: first impressions/queries (can take weeks).
+
+
+## After deploying the 2026-11-13 changes
+1. Push (after owner approval). Wait for the Pages deploy to go green.
+2. In Search Console, open the sitemap page and confirm it was read (322 URLs expected).
+3. Use URL Inspection > Request indexing for `/guide/`, `/guide/how-to-breed-anubis/` and `/data-changelog/` only (the daily quota is small).
+4. Do not resubmit or remove the sitemap.

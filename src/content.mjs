@@ -21,7 +21,7 @@ export function pages({ config, meta, pals, counts, selfOnly, genderedRows, pair
   <li>One male and one female Pal assigned to the farm.</li>
   <li>A Cake in the farm's box. Each egg uses up one Cake.</li>
 </ul>
-<p>The egg then needs to be hatched in an incubator. The species inside is decided when the egg is made, so the incubator doesn't change it.</p>
+<p>The egg then needs to be hatched in an incubator. For eggs made at a Breeding Farm, PalCalc's notes say the species is determined when the egg is produced.</p>
 
 <h2>Breeding power: the hidden number</h2>
 <p>Every Pal has a hidden <strong>breeding power</strong> value. In the data used here it runs from ${Math.min(...pals.map((p) => p.power))} to ${Math.max(...pals.map((p) => p.power))}. Rare, late-game Pals have <em>low</em> numbers; common early Pals have <em>high</em> ones. Each Pal page on this site shows the value.</p>
@@ -94,6 +94,15 @@ export function pages({ config, meta, pals, counts, selfOnly, genderedRows, pair
 </tbody></table>
 <h2>Where the data comes from</h2>
 <p>PalCalc is an open-source Palworld breeding solver by Tyler Camp. It exports Pal data and breeding results directly from the game files. We use its exported Pal list and breeding table under the MIT licence. Copyright notice: "Copyright 2024, Tyler Camp", licensed under the MIT License.</p>
+<h2>PalCalc licence (MIT)</h2>
+<details class="more"><summary><span>Show the full copyright and permission notice</span></summary>
+<p class="licence">Copyright 2024, Tyler Camp
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p></details>
 <h2>How it's checked</h2>
 <ul>
   <li>When the data is imported, every one of the source's breeding rows is compared with the table this site uses, in both parent orders. The import stops if a single row disagrees.</li>

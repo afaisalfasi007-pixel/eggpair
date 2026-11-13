@@ -8,6 +8,8 @@ import config from '../site.config.mjs';
 import { esc, html, layout, breadcrumbs, palLink, palPath, avatar, dexLabel, absUrl, adSlot, icon } from './html.mjs';
 import { parentsOf, outcomes, recipeCounts } from './lib/breeding.mjs';
 import * as content from './content.mjs';
+import { analyze, EARLY_MAX_LEVEL } from './insights.mjs';
+import { guidePages } from './guides.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
@@ -15,9 +17,11 @@ const readJson = (f) => JSON.parse(readFileSync(join(root, 'data', f), 'utf8'));
 
 const pals = readJson('pals.json');
 const breeding = readJson('breeding.json');
-const meta = readJson('meta.json');
+const meta = { ...readJson('meta.json'), lastVerified: readJson('verification.json').lastVerified };
 const data = { pals, breeding };
 const counts = recipeCounts(data);
+const verification = readJson('verification.json');
+const A = analyze(data);
 
 // ---------- assets ----------
 
@@ -65,7 +69,13 @@ function writePage(page) {
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, withBase(layout({ ...page, meta }, assets)));
   if (!page.noindex && page.path !== '/404') pages.push(page.path);
+  const changed = page.pageType === 'pal' || CHANGED.has(page.path);
+  if (page.lastmod) lastmods.set(page.path, page.lastmod);
+  else if (changed) lastmods.set(page.path, meta.lastVerified);
 }
+// Pages whose visible content changed in the 2026-11-13 update (others keep the import date).
+const CHANGED = new Set(['/', '/find/', '/planner/', '/data-sources/', '/guide/how-breeding-works/']);
+const lastmods = new Map();
 
 const website = {
   '@context': 'https://schema.org',
@@ -95,7 +105,8 @@ const pairText = (o) => `${pals[o.a].name}${o.ga ? ` (${genderWord[o.ga]})` : ''
 const fit = (max, ...candidates) => candidates.find((c) => c.length <= max) ?? candidates.at(-1);
 
 const toolShell = (id, inner) => `<section class="card tool" id="${id}">${inner}
-<noscript><p class="note">${icon('info')}<span>This tool needs JavaScript. Every result is also listed on the <a href="/pals/">Pal pages</a>, which work without it.</span></p></noscript></section>`;
+<noscript><p class="note">${icon('info')}<span>This tool needs JavaScript. Every result is also listed on the <a href="/pals/">Pal pages</a>, which work without it.</span></p></noscript>
+<p class="data-note muted small">Data: ${verification.versionLabel}, last verified ${verification.lastVerified}. <a href="/data-changelog/">What was checked</a>. Species only; passives and IVs are not calculated.</p></section>`;
 
 const sexTag = (g) => (g ? `<span class="sex sex-${g}">${genderWord[g]}</span>` : '');
 const pairItem = (left, op, right) => `<li class="pair"><span class="side">${left}</span><span class="op">${icon(op)}</span><span class="side">${right}</span></li>`;
@@ -149,7 +160,7 @@ ${adSlot(config.ads.slots?.belowTool)}
     <li>Pick the second parent. The child appears straight away.</li>
     <li>Tap the child to open its page with every parent pair and its stats.</li>
   </ol>
-  <p>Every breeding step needs one male and one female parent, a Breeding Farm and a Cake. Breeding two Pals of the same species always gives that species.</p>
+  <p>Every breeding step needs one male and one female parent, a Breeding Farm and a Cake. Breeding two Pals of the same species gives that species (one known exception is the flower-crowned Gumoss; see the <a href="/data-changelog/">data changelog</a>).</p>
 
   <h2>Pairs where gender changes the egg</h2>
   <p>In the current data, only one pair of species gives a different child depending on which parent is male:</p>
@@ -157,13 +168,21 @@ ${adSlot(config.ads.slots?.belowTool)}
 ${pairList(genderedRows.map((o) => pairItem(`${palLink(pals[o.a])}${sexTag(o.ga)}<span class="plus">+</span>${palLink(pals[o.b])}${sexTag(o.gb)}`, 'arrow', palLink(pals[o.c]))), 'wide')}
 <section class="prose">
   <h2>Pals that only hatch from two of their own kind</h2>
-  <p>These ${selfOnly.length} Pals never come from two different species, so you need a male and a female of the same Pal (usually caught in the wild):</p>
+  <p>These ${selfOnly.length} Pals never come from two different species, so you need a male and a female of the same Pal. How to get the first pair is not shown in this data. The <a href="/guide/special-breeding-combos/">special combos guide</a> lists them with more detail:</p>
 </section>
 <p class="chips">${selfOnly.map((i) => palLink(pals[i]))}</p>
 <section class="prose">
   <h2>Results from older guides may be wrong</h2>
   <p>Breeding results changed when Palworld reached version 1.0. For example, many early guides say Penking + Bushi gives Anubis. With the 1.0 data used here, that pair hatches <a href="/pals/sibelyx/">Sibelyx</a>. Check the game version on any guide before you spend Cakes on it. The version this site uses is shown at the bottom of every page.</p>
   <p>New to breeding? Read <a href="/guide/how-breeding-works/">how Palworld breeding works</a>.</p>
+  <h2>Guides</h2>
+  <ul>
+    <li><a href="/guide/beginner-breeding/">Breeding for beginners</a></li>
+    <li><a href="/guide/breeding-power-chart/">Breeding power chart for all ${pals.length} Pals</a></li>
+    <li><a href="/guide/special-breeding-combos/">All special breeding combos</a></li>
+    <li><a href="/guide/how-to-breed-anubis/">How to breed Anubis</a> and <a href="/guide/easiest-breeding-routes/">other easy routes</a></li>
+    <li><a href="/guide/">All guides</a> · <a href="/data-changelog/">Data version and changelog</a></li>
+  </ul>
 </section>`,
 });
 
@@ -288,6 +307,27 @@ function statBar(label, value, max) {
   return `<div class="stat"><span class="stat-label">${label}</span><span class="bar" aria-hidden="true"><span style="width:${pct}%"></span></span><b>${value}</b></div>`;
 }
 
+const dataNote = `Data: ${verification.versionLabel}, last verified ${verification.lastVerified}.`;
+const GUIDE_LINKS = { special: ['/guide/special-breeding-combos/', 'Special breeding combos'], power: ['/guide/breeding-power-chart/', 'Breeding power chart'], mech: ['/guide/breeding-mechanics/', 'Breeding mechanics (passives, IVs, gender)'], easy: ['/guide/easiest-breeding-routes/', 'Easiest breeding routes'] };
+/** Data-driven block shown under the Pal header: special-recipe note, easiest catchable parents, fewest steps from early Pals, known issues. */
+function insightBlock(i) {
+  const p = pals[i];
+  const nm = esc(p.name);
+  const parts = [];
+  if (A.specialChildren.has(i)) parts.push(`<p><b>Special recipe (EggPair classification).</b> ${nm} only hatches from the fixed pair${counts[i] === 1 ? '' : 's'} listed below, not from the usual breeding power rule. EggPair derives this label from the data (very few parent pairs, or a collaboration Pal); it is not a flag in the source. See <a href="${GUIDE_LINKS.special[0]}">${GUIDE_LINKS.special[1]}</a>.</p>`);
+  const easy = A.easiestRecipes(i, 3);
+  if (easy.length) {
+    parts.push(`<p><b>Easiest pairs of catchable Pals</b></p><ul class="plain">${easy.map((o) => `<li>${palLink(pals[o.a])}${sexTag(o.ga)} (Lv ${A.wildMin[o.a]}) + ${palLink(pals[o.b])}${sexTag(o.gb)} (Lv ${A.wildMin[o.b]})</li>`).join('')}</ul><p class="muted small">Ranked by the lowest wild level of the parents in the game data. Spawn locations are not modelled.</p>`);
+  }
+  const r = counts[i] > 0 ? A.routeFromEarly(i) : null;
+  if (r && !r.owned) parts.push(`<p>Starting only from early-game Pals, the fewest breeding steps to ${nm} is <a href="/planner/#t=${p.slug}"><b>${r.steps.length}</b></a>. Tick the Pals you own and the planner shortens it.</p>`);
+  const note = verification.notes[p.slug];
+  if (note) parts.push(`<p class="note">${icon('info')}<span>${esc(note)}</span></p>`);
+  const guides = [GUIDE_LINKS.power, GUIDE_LINKS.mech, ...(p.slug === 'anubis' ? [['/guide/how-to-breed-anubis/', 'How to breed Anubis']] : [GUIDE_LINKS.easy])];
+  parts.push(`<p class="muted small">${esc(dataNote)} <a href="/data-changelog/">What was checked</a>. Guides: ${guides.map(([h, t]) => `<a href="${h}">${esc(t)}</a>`).join(' · ')}.</p>`);
+  return `<section class="card insight" aria-label="Breeding tips for ${nm}">${parts.join('\n')}</section>`;
+}
+
 function palPage(i) {
   const p = pals[i];
   const parents = parentsOf(data, i).filter((o) => o.a !== o.b || o.ga);
@@ -352,11 +392,12 @@ ${crumbs.nav}
   </dl>
   <p class="summary">${summary}</p>
   <div class="btn-row">
-    <a class="btn" href="/planner/?t=${p.slug}">${icon('route')}<span>Plan a route</span></a>
-    <a class="btn ghost" href="/find/?t=${p.slug}">${icon('check')}<span>Parents I own</span></a>
-    <a class="btn ghost" href="/?a=${p.slug}">${icon('egg')}<span>Breed with…</span></a>
+    <a class="btn" href="/planner/#t=${p.slug}">${icon('route')}<span>Plan a route</span></a>
+    <a class="btn ghost" href="/find/#t=${p.slug}">${icon('check')}<span>Parents I own</span></a>
+    <a class="btn ghost" href="/#a=${p.slug}">${icon('egg')}<span>Breed with…</span></a>
   </div>
 </header>
+${insightBlock(i)}
 ${p.collab ? `<p class="note">${icon('info')}<span>Collaboration Pals come from the same game-file data as every other Pal, but their results have not been checked against a second source yet.</span></p>` : ''}
 <nav class="jump" aria-label="On this page"><a href="#parents">Parents</a><a href="#offspring">Offspring</a><a href="#stats">Stats</a><a href="#similar">Similar Pals</a></nav>
 
@@ -419,9 +460,10 @@ for (let i = 0; i < pals.length; i++) writePage(palPage(i));
 
 // ---------- guide and info pages ----------
 
-const article = (path, title, description, body, crumbsLabel, extraLd = []) => {
-  const crumbs = breadcrumbs([['/', 'Home'], [path, crumbsLabel || title]]);
-  writePage({ path, title, description, jsonLd: [crumbs.ld, ...extraLd], body: html`${crumbs.nav}<article class="prose">${body}</article>` });
+const article = (path, title, description, body, crumbsLabel, extraLd = [], opts = {}) => {
+  const trail = opts.underGuides ? [['/', 'Home'], ['/guide/', 'Guides'], [path, crumbsLabel || title]] : [['/', 'Home'], [path, crumbsLabel || title]];
+  const crumbs = breadcrumbs(trail);
+  writePage({ path, title, description, lastmod: opts.lastmod, jsonLd: [crumbs.ld, ...extraLd], body: html`${crumbs.nav}<article class="prose">${body}</article>` });
 };
 
 const ctx = { config, meta, pals, counts, selfOnly, genderedRows, pairText, palLink, esc };
@@ -432,6 +474,15 @@ for (const page of content.pages(ctx)) {
     dateModified: meta.importedOn, mainEntityOfPage: absUrl(page.path), author: publisher, publisher,
   }] : [];
   article(page.path, page.title, page.description, page.body, page.crumb, ld);
+}
+
+const guideCtx = { ...ctx, data, A, verification, palPath, dexLabel, EARLY_MAX_LEVEL, icon };
+for (const page of guidePages(guideCtx)) {
+  const ld = page.article ? [{
+    '@context': 'https://schema.org', '@type': 'Article', headline: page.title, description: page.description,
+    dateModified: page.updated, mainEntityOfPage: absUrl(page.path), author: publisher, publisher,
+  }] : [];
+  article(page.path, page.title, page.description, page.body, page.crumb, ld, { underGuides: page.path.startsWith('/guide/') && page.path !== '/guide/', lastmod: page.updated });
 }
 
 writePage({
@@ -447,7 +498,7 @@ writePage({
 const today = meta.importedOn;
 writeFileSync(join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${pages.map((p) => `  <url><loc>${absUrl(p)}</loc><lastmod>${today}</lastmod></url>`).join('\n')}
+${pages.map((p) => `  <url><loc>${absUrl(p)}</loc><lastmod>${lastmods.get(p) || today}</lastmod></url>`).join('\n')}
 </urlset>
 `);
 writeFileSync(join(dist, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${absUrl('/sitemap.xml')}\n`);

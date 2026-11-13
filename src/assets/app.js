@@ -153,13 +153,17 @@ function makePicker(el, pals, onChange) {
 
 // ---------- URL helpers (shareable links) ----------
 
+// Pal pages link here with the choice after a "#" (e.g. /find/#t=anubis) so that no
+// crawlable URL carries a query string. Shared links with "?a=…&b=…" keep working.
 const params = new URLSearchParams(location.search);
+for (const [k, v] of new URLSearchParams(location.hash.replace(/^#/, ''))) if (!params.has(k)) params.set(k, v);
 function indexOfSlug(pals, slug) {
   const i = pals.findIndex((p) => p.slug === slug);
   return i >= 0 ? i : null;
 }
 function setParams(obj) {
   const u = new URL(location.href);
+  u.hash = '';
   for (const [k, v] of Object.entries(obj)) v == null ? u.searchParams.delete(k) : u.searchParams.set(k, v);
   history.replaceState(null, '', u);
 }

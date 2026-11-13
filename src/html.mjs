@@ -120,8 +120,9 @@ ${page.body}
 </main>
 <footer class="foot">
   <div class="wrap">
-    <p class="data-line">${icon('info')}<span>Breeding data: ${esc(m.gameVersion)} · source <a href="/data-sources/">${esc(m.source)}</a> (DB ${esc(m.sourceDbVersion)}, ${esc(m.sourceCommitDate)}) · ${m.palCount} Pals.</span></p>
+    <p class="data-line">${icon('info')}<span>Breeding data: ${esc(m.gameVersion)} · source <a href="/data-sources/">${esc(m.source)}</a> (DB ${esc(m.sourceDbVersion)}, ${esc(m.sourceCommitDate)}) · ${m.palCount} Pals${m.lastVerified ? ` · last verified ${esc(m.lastVerified)} (<a href="/data-changelog/">changelog</a>)` : ''}.</span></p>
     <nav class="foot-links" aria-label="Site">
+      <a href="/guide/">Guides</a>
       <a href="/guide/how-breeding-works/">How breeding works</a>
       <a href="/about/">About</a>
       <a href="/data-sources/">Data sources</a>

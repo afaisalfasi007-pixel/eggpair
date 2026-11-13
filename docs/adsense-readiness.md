@@ -28,3 +28,8 @@ No approval is guaranteed. Google decides after reviewing the site, and its requ
 6. [ ] When ready, apply. Only then set `ADSENSE_CLIENT`, `ADS_ENABLED` and the ad slot IDs from AdSense. The build already writes `ads.txt` when the client ID is set.
 
 Do not use auto-generated filler text, copy other sites' text, or click your own ads; these cause rejection or a ban.
+
+
+## Update 2026-11-13
+- Added 10 guides, a hub and a data-version page (`/data-changelog/`) with real, checked content. Still no ad scripts. Approval is not guaranteed; Google decides.
+- Remaining owner tasks: real contact method beyond the GitHub issues link, review of Privacy/Terms wording, enough traffic and original content over time.

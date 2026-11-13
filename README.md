@@ -139,3 +139,9 @@ The import compares every one of PalCalc's breeding rows with the converted tabl
 - **Google mein lana:** "Google Search Console" ke 4 steps. Google ko waqt lagta hai, guarantee koi nahi.
 - **Ads:** abhi band hain. AdSense ki approval ke baad hi on karein. Shayad apna domain (~$10–15 saal) lena pade, magar ye faisla baad mein.
 - **Game update ke baad:** "Updating the data" wali 3 commands chalayein. Agar data mein koi ghalti ho to script khud ruk jayegi.
+
+
+## Guides and data checks
+- Guides live in `src/guides.mjs` (hub `/guide/`, plus `/data-changelog/`). Numbers on them are computed at build time from the data.
+- `data/verification.json` records the data version, upstream commit checks and known issues. Run `npm run verify-data` after importing data; the tests fail if the recorded numbers differ from the computed ones.
+- Pal pages link to the tools with `#t=slug` / `#a=slug` (no query strings); `?a=&b=&t=` links still work.

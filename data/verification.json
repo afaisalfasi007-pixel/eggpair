@@ -1,0 +1,86 @@
+{
+  "lastVerified": "2026-11-13",
+  "versionLabel": "Palworld 1.0.x",
+  "mechanicsVerifiedFor": "1.0.5.102999",
+  "summary": "Pal list and breeding table come from PalCalc's game-file export (DB v28, 16 Oct 2026). Upstream has not changed the Pal list or breeding table since, as of 12 Nov 2026. PalCalc's published research verifies the breeding rules against game version 1.0.5.102999. EggPair re-checked the data on 13 Nov 2026 as described below.",
+  "upstream": {
+    "repository": "https://github.com/tylercamp/palcalc",
+    "licence": "MIT",
+    "importedCommit": "66f18a000e2107640b219562437357ced5aff7eb",
+    "importedCommitDate": "2026-10-16",
+    "checkedCommit": "ec8636d7a1545245f56ae13820e52990a46fb6f7",
+    "checkedCommitDate": "2026-11-12",
+    "palListChangedSinceImport": false,
+    "breedingTableChangedSinceImport": false,
+    "otherChanges": "Upstream commit 7691b05 (17 Oct 2026) changed only how the IV-inheritance weights are stored in db.json. No Pal or breeding-table change.",
+    "lastDataRegenerationForGameUpdate": "Palworld v1.0 (10 Jul 2026), per PalCalc's commit history. PalCalc does not state which exact game build the export was made from."
+  },
+  "internalChecks": {
+    "palCount": 299,
+    "collabPals": 11,
+    "variantPals": 85,
+    "breedableFromTwoSpecies": 273,
+    "onlyFromItself": 26,
+    "specialChildren": 90,
+    "specialRows": 136,
+    "earlyPals": 58
+  },
+  "externalChecks": [
+    {
+      "date": "2026-11-13",
+      "source": "palworld.gg public Pal list",
+      "result": "297 of 297 Pal names and breeding powers are identical to ours.",
+      "caveat": "We have 2 entries that list does not show: Gumoss (Flower) and Panthalus. Only names and breeding powers were compared, not recipes."
+    },
+    {
+      "date": "2026-11-13",
+      "source": "PinDrop special-combos list",
+      "result": "The number of recipes for each of the 7 Terraria collaboration Pals it lists by count (Demon Eye 9, Enchanted Sword 7, Eye of Cthulhu 10, Illuminant Bat 3, Illuminant Slime 4, Purple Slime 4, Rainbow Slime 16) is identical to ours.",
+      "caveat": "PinDrop states 134 special combos in total; our derived count is 136. We could not explain the difference of 2. Other sites report 131 and 137, so counting conventions probably differ."
+    },
+    {
+      "date": "2026-11-13",
+      "source": "Spot checks against published guides and calculators",
+      "result": "Relaxaurus + Sparkit gives Relaxaurus Lux; Katress (female) + Wixen (male) gives Katress Ignis and the reverse genders give Wixen Noct; Penking + Bushi gives Sibelyx (breeding powers 2070 and 1560 average to 1815, nearest Pal is Sibelyx at 1810).",
+      "caveat": "A handful of pairs only. This is not a check of all 44,850 pairs against the live game."
+    },
+    {
+      "date": "2026-10-29",
+      "source": "PalCalc research baseline (game version 1.0.5.102999)",
+      "result": "PalCalc's published research reports its breeding rules for child species, gender, passives, attacks and IVs as verified for game version 1.0.5.102999 (checked 22 to 29 Oct 2026).",
+      "caveat": "This is PalCalc's own static analysis of the game files, not live-game testing, and not a check of EggPair's table. See the checks listed on this page."
+    }
+  ],
+  "notes": {
+    "gumoss-flower": "PalCalc's research says two flower-crowned Gumoss select the ordinary Gumoss in the game, so the \"two of the same Pal give that Pal\" rule shown here is only an approximation for this form.",
+    "panthalus": "This entry is in PalCalc's game-file export but is not on every public Pal list we checked (palworld.gg does not show it). PalCalc's research says bosses and some other species are excluded from the breeding pool, so treat the same-species rule shown here with caution and check it in the game."
+  },
+  "limitations": [
+    "Results show the species the ordinary breeding rules pick. According to PalCalc's research the game can sometimes replace it with a boss or Alpha form, and mutation uses a different rule. EggPair does not model either.",
+    "Passive skills, IVs and inherited attacks are not calculated, only the species.",
+    "Egg-production and hatching times are not modelled.",
+    "The special-combo label is derived by us (see the Special breeding combos guide); it is not a field in the source data."
+  ],
+  "history": [
+    {
+      "date": "2026-11-13",
+      "title": "Verification pass",
+      "items": [
+        "Compared our import with the latest PalCalc commit (12 Nov 2026): Pal list and breeding table unchanged, so no new import was needed.",
+        "Cross-checked 297 Pal names and breeding powers against a second public source: all identical.",
+        "Matched the recipe counts of the collaboration Pals against a second source: identical.",
+        "Reconciled our counts with other sites (see the notes on this page) and added warnings for Gumoss (Flower) and Panthalus.",
+        "Added this page, the breeding power chart and the special combos list."
+      ]
+    },
+    {
+      "date": "2026-10-29",
+      "title": "First import",
+      "items": [
+        "Imported 299 Pals and 44,850 parent pairs from PalCalc commit 66f18a0 (DB v28, MIT licence).",
+        "Every row of the source table was compared with our converted table in both parent orders: all matched.",
+        "Automated tests recompute every regular result from breeding power."
+      ]
+    }
+  ]
+}

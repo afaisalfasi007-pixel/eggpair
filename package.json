@@ -10,6 +10,7 @@
     "check": "npm run build && npm test",
     "serve": "node scripts/serve.mjs",
     "smoke": "node scripts/smoke.mjs",
-    "import-data": "node scripts/import-palcalc.mjs"
+    "import-data": "node scripts/import-palcalc.mjs",
+    "verify-data": "node scripts/verify-data.mjs"
   }
 }

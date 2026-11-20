@@ -1,6 +1,6 @@
 # Terraria collaboration pages: recommendation only
 
-Status: **recommendation for the owner. Nothing was changed, deleted, redirected or noindexed.**
+Status: **option 2 (hub page) was added on 2026-11-21 in the working tree, not yet published. Nothing was deleted, redirected or noindexed.** The hub is `/guide/terraria-collaboration-pals/`; the 11 collab Pal pages link to it and it links to each of them.
 
 ## What exists
 - 11 collaboration Pals, each with its own `/pals/<slug>/` page (they stay in the sitemap).

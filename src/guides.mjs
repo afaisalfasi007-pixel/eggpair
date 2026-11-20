@@ -2,6 +2,7 @@
 // source; anything we could not verify is labelled as such on the page.
 
 import { childOf } from './lib/breeding.mjs';
+import { shortAnubisRoute } from './insights.mjs';
 
 const MECHANICS_SOURCE = 'https://github.com/tylercamp/palcalc/blob/main/PALWORLD-BREEDING-MECHANICS.md';
 
@@ -13,8 +14,9 @@ export const GUIDE_LIST = [
   { path: '/guide/special-breeding-combos/', title: 'Special breeding combos', blurb: 'The fixed recipes that ignore the usual rule.' },
   { path: '/guide/breeding-mechanics/', title: 'Breeding mechanics', blurb: 'Species, passives, attacks, IVs and gender, with the odds.' },
   { path: '/guide/breeding-farm-and-cakes/', title: 'Breeding Farm and Cakes', blurb: 'What is confirmed about farms and Cakes, and what is not.' },
-  { path: '/guide/how-to-breed-anubis/', title: 'How to breed Anubis', blurb: 'Recipes, routes and which 2024 recipes no longer work.' },
+  { path: '/guide/how-to-breed-anubis/', title: 'How to breed Anubis', blurb: 'A 4-step route checked against our data, steps by wild level and older pairs that now hatch something else.' },
   { path: '/guide/easiest-breeding-routes/', title: 'Easiest breeding routes', blurb: 'The easiest pairs for popular Pals.' },
+  { path: '/guide/terraria-collaboration-pals/', title: 'Terraria collaboration Pals', blurb: 'All 11 collab Pals compared: recipes, wild levels and links.' },
   { path: '/guide/how-to-use-the-calculator/', title: 'How to use EggPair', blurb: 'The calculator, finder, planner and My Pals list.' },
   { path: '/data-changelog/', title: 'Data version and changelog', blurb: 'Where the data comes from and how it was checked.' },
 ];
@@ -39,6 +41,7 @@ export function guidePages(ctx) {
   const related = (...paths) => `<h2>Related guides</h2><ul>${paths.map((p) => { const g = GUIDE_LIST.find((x) => x.path === p); return `<li><a href="${p}">${esc(g.title)}</a>: ${esc(g.blurb)}</li>`; }).join('')}</ul>`;
   const toolLinks = `<p class="btn-row"><a class="btn" href="/">${icon('egg')}<span>Calculator</span></a><a class="btn ghost" href="/find/">${icon('search')}<span>Find parents</span></a><a class="btn ghost" href="/planner/">${icon('route')}<span>Route planner</span></a></p>`;
   const stepList = (steps) => `<ul class="pairs">${steps.map((s) => `<li class="pair"><span class="side">${a(s.a)}${gtag(s.ga)}</span><span class="op">${icon('plus')}</span><span class="side">${a(s.b)}${gtag(s.gb)}<small class="with">gives ${esc(pals[s.child].name)}</small></span></li>`).join('')}</ul>`;
+  const wildText = (i) => (pals[i].wildLevel ? (pals[i].wildLevel[0] === pals[i].wildLevel[1] ? String(pals[i].wildLevel[0]) : `${pals[i].wildLevel[0]}–${pals[i].wildLevel[1]}`) : 'n/a');
   const lv = (i) => (A.wildMin[i] == null ? 'n/a' : `Lv ${A.wildMin[i]}`);
   const easyTable = (target, limit) => {
     const rows = A.easiestRecipes(target, limit);
@@ -102,7 +105,7 @@ ${toolLinks}
 <h2>Special combos ignore that rule</h2>
 <p>Some Pals only come from fixed recipes. If you want one of them, the list in the <a href="/guide/special-breeding-combos/">special combos guide</a> is the only way in, apart from catching one.</p>
 <h2>Why older guides can be wrong</h2>
-<p>Palworld 1.0 changed many recipes, so lists written for earlier versions can send you to the wrong Pal. Some older guides (we have not linked a specific guide) listed the pairs below as Anubis recipes. <strong>Unverified:</strong> that those guides gave these exact pairs. What we do know is what each pair hatches in the 1.0 data used here:</p>
+<p>Palworld 1.0 changed many recipes, so lists written for earlier versions can send you to the wrong Pal. Some older guides (we have not linked a specific guide) listed the pairs below as Anubis recipes. <strong>Unverified:</strong> that those guides gave these exact pairs, and we have not tested these pairs in the live game. What we do know is what each pair hatches in the 1.0 data used here:</p>
 ${table(['Old Anubis recipe', 'Hatches in 1.0 data', 'Still Anubis?'], old.map(([x, y]) => { const c = childOf(data, idx(x), idx(y)).child; return tr(`${a(idx(x))} + ${a(idx(y))}`, c == null ? 'Depends on gender' : a(c), c === idx('Anubis') ? 'Yes' : 'No'); }))}
 <p>Read <a href="/guide/how-to-breed-anubis/">how to breed Anubis</a> for the current recipes.</p>
 <h2>Quick tips</h2>
@@ -300,34 +303,53 @@ ${related('/guide/how-breeding-works/', '/guide/breeding-farm-and-cakes/', '/gui
   {
     const an = idx('Anubis');
     const old = [['Arsox', 'Pyrin'], ['Caprity', 'Beakon'], ['Eikthyrdeer', 'Beakon'], ['Incineram', 'Surfent'], ['Penking', 'Bushi']];
-    const route = A.routeFromEarly(an);
+    const short = shortAnubisRoute(data);
+    const caps = [10, 20, 30, 40, 50];
+    const capRows = caps.map((cap) => {
+      const r = A.routeWithCap(an, cap);
+      const n = pals.filter((p, i) => A.catchable(i) && A.wildMin[i] <= cap).length;
+      return tr(`Wild level ${cap} or lower`, String(n), r ? (r.owned ? '0 (catch it directly)' : String(r.steps.length)) : 'Not reachable');
+    });
+    const wl = pals[an].wildLevel;
+    const pb = idx('Penking'), bu = idx('Bushi');
+    const pbChild = childOf(data, pb, bu).child;
     add({
       path: '/guide/how-to-breed-anubis/',
       crumb: 'How to breed Anubis',
       title: 'How to Breed Anubis in Palworld 1.0: Recipes and Routes',
-      description: 'Anubis breeding in Palworld 1.0: its breeding power, how many parent pairs make it, the easiest pairs of catchable Pals, and why 2024 recipes no longer work.',
+      description: 'Anubis breeding in Palworld 1.0: breeding power, a 4-step route checked against our data, steps by wild level, and older pairs that now hatch something else.',
       body: `<h1>How to breed Anubis in Palworld 1.0</h1>
-<p class="lead">Anubis is one of the most searched breeding targets. In the 1.0 data it can be hatched from many pairs, but none of the easy early-game ones.</p>
+<p class="lead">Anubis is one of the most searched breeding targets. In the 1.0 data it hatches from many pairs. How short your route is depends mostly on which higher-level Pals you can catch.</p>
 ${versionBox()}
 <h2>Quick facts (from the data)</h2>
 <ul>
   <li>Breeding power: <strong>${pals[an].power}</strong>, number ${A.powerRank[an]} of ${sum.palCount} from the lowest (see the <a href="/guide/breeding-power-chart/">chart</a>).</li>
   <li><strong>${fmt(A.counts[an])}</strong> pairs of different Pals hatch it, plus two Anubis. Full list: <a href="${palPath(pals[an])}">Anubis page</a>.</li>
   <li>It follows the normal breeding power rule. It is not a special recipe, and gender does not change the result.</li>
+  ${wl ? `<li>Wild level in the game data: ${wl[0]}–${wl[1]}. Where it spawns is not modelled.</li>` : ''}
 </ul>
-<h2>Do the 2024 recipes still work?</h2>
-<p>Not in the 1.0 data used here. <strong>Unverified:</strong> we have not linked a specific older guide, so we cannot show who listed these pairs or when. Here is what each pair hatches in this data:</p>
+${short ? `<h2>A short route: 4 breeding steps</h2>
+<p>This chain uses two special recipes, ${a(idx('Relaxaurus Lux'))} and ${a(idx('Jormuntide Ignis'))}. We checked every step against our breeding table, and each pair hatches exactly the Pal shown:</p>
+${stepList(short.steps)}
+<p>You start with ${short.starters.map((i) => `${a(i)} (wild level ${wildText(i)})`).join(', ')}. Each step needs one male and one female.</p>
+<p class="note">${icon('info')}<span><strong>What this does and does not show.</strong> The data confirms what each pair hatches. It does not show where these Pals spawn, when you can first catch them, or what level you need to unlock the Breeding Farm. Some published guides describe the same chain with an early unlock level; <strong>unverified:</strong> we did not read them in full and could not confirm that level. Note that the starting Pals have high wild levels in the data (for example, ${a(idx('Moldron Cryst'))} is level ${wildText(idx('Moldron Cryst'))}).</span></p>` : ''}
+<h2>How many steps by wild level you can catch</h2>
+<p>This is the planner's fewest-steps answer if you can obtain every wild-catchable Pal up to a wild level, and nothing else. It is a way to compare routes, not a play-through.</p>
+${table(['If you can catch Pals up to', 'Pals available', 'Fewest breeding steps'], capRows)}
+<p class="muted small">Wild level here is the lowest wild level in the game data. The first row (level 10 or lower) is a theoretical minimum-level start, not a practical route. ${wl ? `Anubis itself has wild level ${wl[0]}–${wl[1]} in the data, so at that level it can also be caught directly.` : ''} Species only; passives and IVs are not planned. Tick the Pals you really own on <a href="/my-pals/">My Pals</a> and use the <a href="/planner/#t=anubis">planner</a> for your own route.</p>
+<h2>Do older recipes still work?</h2>
+<p>Not in the 1.0 data used here. <strong>Unverified:</strong> we have not linked a specific older guide, so we cannot show who listed these pairs or when, and we have not tested these pairs in the live game. Here is what each pair hatches in this data:</p>
 ${table(['Old recipe', 'Hatches in 1.0 data', 'Still Anubis?'], old.map(([x, y]) => { const c = childOf(data, idx(x), idx(y)).child; return tr(`${a(idx(x))} + ${a(idx(y))}`, c == null ? 'Depends on gender' : a(c), c === an ? 'Yes' : 'No'); }))}
-<h2>The easiest pairs in the 1.0 data</h2>
+<p><strong>Penking + Bushi:</strong> our data says this pair hatches ${a(pbChild)} (power ${pals[pb].power} and ${pals[bu].power}, rounded average ${Math.floor((pals[pb].power + pals[bu].power + 1) / 2)}, nearest Pal ${pals[pbChild].power}). <strong>Unverified:</strong> some pages we saw in search results still connect Penking + Bushi with Anubis in 1.0; we did not read them in full, and we have not tested the pair in the game. Until it is confirmed in the game, treat both claims as unconfirmed.</p>
+<h2>Easiest pairs of wild-catchable parents</h2>
 <p>${esc(rankNote)}</p>
 ${easyTable(an, 6)}
-<p class="muted small">These parents have high wild levels, so Anubis is a late-game breeding target in this data. <strong>Unverified:</strong> some people say 1.0 moved powerful Pals later; we did not check that claim and have no source for it.</p>
-<h2>Starting only from early-game Pals</h2>
-${route && !route.owned ? `<p>If you start only from the ${sum.earlyPals} Pals whose lowest wild level is ${ctx.EARLY_MAX_LEVEL} or below, the fewest steps to Anubis is <strong>${route.steps.length}</strong>. That is a long chain. Add Pals you already own on <a href="/my-pals/">My Pals</a> and the <a href="/planner/#t=anubis">planner</a> will shorten it.</p><details class="more"><summary>${icon('chevron')}<span>Show the ${route.steps.length} steps</span></summary>${stepList(route.steps)}</details><p class="muted small">Assumes you can get a male and a female for every step. It plans species only.</p>` : '<p>No route was found from the early-game Pals.</p>'}
+<p class="muted small">Each of these needs only one breeding step, but every parent has a wild level of 46 or higher in the data. The 4-step route and the table above show how the number of steps changes with the level you can catch.</p>
 <h2>Tips</h2>
 <ul>
   <li>Use the <a href="/find/#t=anubis">parent finder</a> with the "only pairs I own" filter to see what you can already make.</li>
   <li>This page covers species. For passives and IVs on your Anubis, read <a href="/guide/breeding-mechanics/">breeding mechanics</a>.</li>
+  <li>Setting up the farm and Cakes: <a href="/guide/breeding-farm-and-cakes/">what is confirmed and what is not</a>.</li>
 </ul>
 ${related('/guide/easiest-breeding-routes/', '/guide/breeding-combinations/', '/guide/beginner-breeding/')}`,
     });
@@ -341,23 +363,23 @@ ${related('/guide/easiest-breeding-routes/', '/guide/breeding-combinations/', '/
     const noRecipe = ['Orserk', 'Shadowbeak', 'Frostallion', 'Lyleen', 'Jetragon', 'Selyne', 'Bastigor', 'Faleris', 'Xenolord', 'Neptilius', 'Paladius', 'Necromus', 'Hartalis', 'Grizzbolt'].map(idx).filter((i) => i >= 0 && A.counts[i] === 0);
     const routeLine = (i) => {
       const r = A.routeFromEarly(i);
-      if (!r) return 'Not reachable from the early-game Pals.';
-      if (r.owned) return 'This is an early-game Pal.';
-      return `<a href="/planner/#t=${esc(pals[i].slug)}">${r.steps.length} step${r.steps.length === 1 ? '' : 's'}</a> from the early-game Pals.`;
+      if (!r) return 'Not reachable from low-level starting Pals.';
+      if (r.owned) return 'This is a low-level Pal.';
+      return `${r.steps.length} step${r.steps.length === 1 ? '' : 's'} from low-level Pals only (wild level ${ctx.EARLY_MAX_LEVEL} or lower; a theoretical minimum, see <a href="/planner/#t=${esc(pals[i].slug)}">the planner</a> for your own Pals).`;
     };
     const section = (i) => `<h3>${a(i)}</h3><p class="muted small">Breeding power ${pals[i].power}. ${fmt(A.counts[i])} pair${A.counts[i] === 1 ? '' : 's'}. ${routeLine(i)}</p>${easyTable(i, 3)}`;
     add({
       path: '/guide/easiest-breeding-routes/',
       crumb: 'Easiest breeding routes',
       title: 'Easiest Breeding Routes for Popular Pals (Palworld 1.0)',
-      description: 'For popular Pals in Palworld 1.0: the easiest parent pairs of catchable Pals and the fewest breeding steps from early-game Pals, from checked data.',
+      description: 'For popular Pals in Palworld 1.0: the easiest parent pairs of catchable Pals and the fewest steps from low-level starting Pals, from checked data.',
       body: `<h1>Easiest breeding routes for popular Pals (1.0)</h1>
-<p class="lead">Which pair should you try first? For each popular target below, this page shows the easiest pairs in the data and how many steps it takes from the earliest Pals.</p>
+<p class="lead">Which pair should you try first? For each popular target below, this page shows the easiest pairs in the data and how many steps it takes if you start only from low-level Pals.</p>
 ${versionBox()}
 <h2>How we rank</h2>
 <ul>
   <li><strong>Easiest pairs:</strong> ${esc(rankNote)}</li>
-  <li><strong>Steps from early-game Pals:</strong> the fewest breeding steps if you start only from the ${sum.earlyPals} Pals whose lowest wild level is ${ctx.EARLY_MAX_LEVEL} or below, using the same planner as the <a href="/planner/">route planner</a>. It plans species only and assumes you can get a male and a female for every step.</li>
+  <li><strong>Steps from low-level Pals:</strong> the fewest breeding steps if you start only from the ${sum.earlyPals} Pals whose lowest wild level is ${ctx.EARLY_MAX_LEVEL} or below, using the same planner as the <a href="/planner/">route planner</a>. This is a theoretical minimum-level start, not a practical route, because it ignores higher-level Pals you can catch. It plans species only and assumes you can get a male and a female for every step.</li>
   <li>These are our own calculations from the breeding table, not tested in the game. Passives and IVs are not planned.</li>
 </ul>
 <h2>Popular targets</h2>
@@ -369,6 +391,45 @@ ${special.map(section).join('')}
 <p>People often search "how to breed" for these. In the data they only hatch from two of their own kind, so there is no pair of other Pals to look for. How to obtain the first male and female is not something this data shows; check the game or official sources.</p>
 <p class="chips">${noRecipe.map((i) => ctx.palLink(pals[i])).join('')}</p>
 ${related('/guide/how-to-breed-anubis/', '/guide/special-breeding-combos/', '/guide/how-to-use-the-calculator/')}`,
+    });
+  }
+
+  // ---------------------------------------------------------------- Terraria collab hub
+  {
+    const collab = pals.map((p, i) => i).filter((i) => pals[i].collab).sort((x, y) => A.counts[y] - A.counts[x] || pals[x].name.localeCompare(pals[y].name));
+    const withPairs = collab.filter((i) => A.counts[i] > 0);
+    const selfOnly = collab.filter((i) => A.counts[i] === 0);
+    const wild = (i) => (pals[i].wildLevel ? (pals[i].wildLevel[0] === pals[i].wildLevel[1] ? `Lv ${pals[i].wildLevel[0]}` : `Lv ${pals[i].wildLevel[0]}–${pals[i].wildLevel[1]}`) : 'n/a');
+    const parentsCell = (i) => {
+      const ps = ctx.parentsOf(data, i).filter((o) => o.a !== o.b || o.ga);
+      if (ps.length === 0) return 'None';
+      if (ps.length > 4) return `${ps.length} pairs: see the <a href="${palPath(pals[i])}">${esc(pals[i].name)} page</a>`;
+      return ps.map((o) => `${a(o.a)}${gtag(o.ga)} + ${a(o.b)}${gtag(o.gb)}`).join('<br>');
+    };
+    add({
+      path: '/guide/terraria-collaboration-pals/',
+      crumb: 'Terraria collaboration Pals',
+      title: 'Palworld Terraria Collaboration Pals: Breeding Recipes (1.0)',
+      description: `All ${collab.length} Terraria collaboration Pals in the Palworld 1.0 data: breeding recipes, wild levels and which ones only hatch from their own kind.`,
+      body: `<h1>Terraria collaboration Pals: breeding recipes (1.0)</h1>
+<p class="lead">The data includes ${collab.length} Pals from the Terraria collaboration. This page lists them side by side, with every recipe in our data and a link to each Pal's own page.</p>
+${versionBox()}
+<h2>What this data shows</h2>
+<ul>
+  <li>All ${collab.length} share the same breeding power in the data (${pals[collab[0]].power}), so the usual power rule does not choose them. ${withPairs.length} of them hatch from fixed parent pairs; EggPair counts these as <a href="/guide/special-breeding-combos/">special recipes</a>.</li>
+  <li>${selfOnly.map(a).join(' and ')} have no recipe from two different Pals in the data. They only hatch from two of their own kind.</li>
+  <li>Everything here comes from the same game-file export as the other Pals. We matched the recipe counts of seven of them against one other site (see the <a href="/data-changelog/">changelog</a>) but have not checked them in the live game.</li>
+</ul>
+<h2>All ${collab.length} collaboration Pals</h2>
+${table(['Pal', 'Recipes', 'Wild level', 'Parents'], collab.map((i) => tr(a(i), fmt(A.counts[i]), wild(i), parentsCell(i))), 'chart')}
+<p class="muted small">A recipe needs one male and one female parent unless the table shows a gender. Wild level is the level range in the game data. Where and whether a Pal can be caught is not modelled.</p>
+<h2>How to use this</h2>
+<ol>
+  <li>Open the Pal you want from the table and check its parents.</li>
+  <li>Tick the Pals you own on <a href="/my-pals/">My Pals</a>; the <a href="/find/">parent finder</a> and <a href="/planner/">route planner</a> use that list.</li>
+  <li>For passives and IVs, read <a href="/guide/breeding-mechanics/">breeding mechanics</a>. EggPair plans the species only.</li>
+</ol>
+${related('/guide/special-breeding-combos/', '/guide/breeding-combinations/', '/guide/easiest-breeding-routes/')}`,
     });
   }
 

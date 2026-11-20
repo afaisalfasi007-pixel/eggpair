@@ -8,7 +8,7 @@ import config from '../site.config.mjs';
 import { esc, html, layout, breadcrumbs, palLink, palPath, avatar, dexLabel, absUrl, adSlot, icon } from './html.mjs';
 import { parentsOf, outcomes, recipeCounts } from './lib/breeding.mjs';
 import * as content from './content.mjs';
-import { analyze, EARLY_MAX_LEVEL } from './insights.mjs';
+import { analyze, EARLY_MAX_LEVEL, shortAnubisRoute } from './insights.mjs';
 import { guidePages } from './guides.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -106,7 +106,7 @@ const fit = (max, ...candidates) => candidates.find((c) => c.length <= max) ?? c
 
 const toolShell = (id, inner) => `<section class="card tool" id="${id}">${inner}
 <noscript><p class="note">${icon('info')}<span>This tool needs JavaScript. Every result is also listed on the <a href="/pals/">Pal pages</a>, which work without it.</span></p></noscript>
-<p class="data-note muted small">Data: ${verification.versionLabel}, last verified ${verification.lastVerified}. <a href="/data-changelog/">What was checked</a>. Species only; passives and IVs are not calculated.</p></section>`;
+<p class="data-note muted small">Data: ${verification.versionLabel}, last verified ${verification.lastVerified}. <a href="/data-changelog/">What was checked</a>. Species only; passives and IVs are not calculated. <a href="/guide/how-to-use-the-calculator/">How to use this tool</a>.</p></section>`;
 
 const sexTag = (g) => (g ? `<span class="sex sex-${g}">${genderWord[g]}</span>` : '');
 const pairItem = (left, op, right) => `<li class="pair"><span class="side">${left}</span><span class="op">${icon(op)}</span><span class="side">${right}</span></li>`;
@@ -173,11 +173,12 @@ ${pairList(genderedRows.map((o) => pairItem(`${palLink(pals[o.a])}${sexTag(o.ga)
 <p class="chips">${selfOnly.map((i) => palLink(pals[i]))}</p>
 <section class="prose">
   <h2>Results from older guides may be wrong</h2>
-  <p>Breeding results changed when Palworld reached version 1.0. For example, many early guides say Penking + Bushi gives Anubis. With the 1.0 data used here, that pair hatches <a href="/pals/sibelyx/">Sibelyx</a>. Check the game version on any guide before you spend Cakes on it. The version this site uses is shown at the bottom of every page.</p>
+  <p>Breeding results changed when Palworld reached version 1.0. For example, some older guides list Penking + Bushi as an Anubis recipe (<strong>unverified:</strong> we have not checked which guides, and some pages we saw may still mention it for 1.0). With the 1.0 data used here, that pair hatches <a href="/pals/sibelyx/">Sibelyx</a>; we have not tested it in the live game. Check the game version on any guide before you spend Cakes on it. The version this site uses is shown at the bottom of every page.</p>
   <p>New to breeding? Read <a href="/guide/how-breeding-works/">how Palworld breeding works</a>.</p>
   <h2>Guides</h2>
   <ul>
-    <li><a href="/guide/beginner-breeding/">Breeding for beginners</a></li>
+    <li><a href="/guide/beginner-breeding/">Breeding for beginners</a> and <a href="/guide/how-to-use-the-calculator/">how to use this calculator</a></li>
+    <li><a href="/guide/breeding-combinations/">Breeding combos in 1.0</a> and <a href="/guide/breeding-farm-and-cakes/">Breeding Farm and Cakes</a></li>
     <li><a href="/guide/breeding-power-chart/">Breeding power chart for all ${pals.length} Pals</a></li>
     <li><a href="/guide/special-breeding-combos/">All special breeding combos</a></li>
     <li><a href="/guide/how-to-breed-anubis/">How to breed Anubis</a> and <a href="/guide/easiest-breeding-routes/">other easy routes</a></li>
@@ -309,6 +310,7 @@ function statBar(label, value, max) {
 
 const dataNote = `Data: ${verification.versionLabel}, last verified ${verification.lastVerified}.`;
 const GUIDE_LINKS = { special: ['/guide/special-breeding-combos/', 'Special breeding combos'], power: ['/guide/breeding-power-chart/', 'Breeding power chart'], mech: ['/guide/breeding-mechanics/', 'Breeding mechanics (passives, IVs, gender)'], easy: ['/guide/easiest-breeding-routes/', 'Easiest breeding routes'] };
+const anubisRoute = (() => { const r = shortAnubisRoute(data); return r ? { ...r, members: new Set(r.steps.flatMap((s) => [s.a, s.b, s.child])) } : null; })();
 /** Data-driven block shown under the Pal header: special-recipe note, easiest catchable parents, fewest steps from early Pals, known issues. */
 function insightBlock(i) {
   const p = pals[i];
@@ -320,10 +322,11 @@ function insightBlock(i) {
     parts.push(`<p><b>Easiest pairs of catchable Pals</b></p><ul class="plain">${easy.map((o) => `<li>${palLink(pals[o.a])}${sexTag(o.ga)} (Lv ${A.wildMin[o.a]}) + ${palLink(pals[o.b])}${sexTag(o.gb)} (Lv ${A.wildMin[o.b]})</li>`).join('')}</ul><p class="muted small">Ranked by the lowest wild level of the parents in the game data. Spawn locations are not modelled.</p>`);
   }
   const r = counts[i] > 0 ? A.routeFromEarly(i) : null;
-  if (r && !r.owned) parts.push(`<p>Starting only from early-game Pals, the fewest breeding steps to ${nm} is <a href="/planner/#t=${p.slug}"><b>${r.steps.length}</b></a>. Tick the Pals you own and the planner shortens it.</p>`);
+  if (r && !r.owned) parts.push(`<p>Starting only from low-level Pals (wild level ${EARLY_MAX_LEVEL} or lower), the fewest breeding steps to ${nm} is <a href="/planner/#t=${p.slug}"><b>${r.steps.length}</b></a>. This is a theoretical minimum-level start, not a practical route, because it ignores higher-level Pals you can catch. Tick the Pals you own and the <a href="/planner/#t=${p.slug}">planner</a> gives a realistic route.</p>`);
+  if (anubisRoute && anubisRoute.members.has(i) && p.slug !== 'anubis') parts.push(`<p>${nm} is part of a short 4-step route to Anubis that we checked against our breeding table: <a href="/guide/how-to-breed-anubis/">how to breed Anubis</a>.</p>`);
   const note = verification.notes[p.slug];
   if (note) parts.push(`<p class="note">${icon('info')}<span>${esc(note)}</span></p>`);
-  const guides = [GUIDE_LINKS.power, GUIDE_LINKS.mech, ...(p.slug === 'anubis' ? [['/guide/how-to-breed-anubis/', 'How to breed Anubis']] : [GUIDE_LINKS.easy])];
+  const guides = [GUIDE_LINKS.power, GUIDE_LINKS.mech, ['/guide/breeding-combinations/', 'Breeding combos'], ...(p.slug === 'anubis' ? [['/guide/how-to-breed-anubis/', 'How to breed Anubis']] : [GUIDE_LINKS.easy]), ...(p.collab ? [['/guide/terraria-collaboration-pals/', 'All Terraria collaboration Pals']] : [])];
   parts.push(`<p class="muted small">${esc(dataNote)} <a href="/data-changelog/">What was checked</a>. Guides: ${guides.map(([h, t]) => `<a href="${h}">${esc(t)}</a>`).join(' · ')}.</p>`);
   return `<section class="card insight" aria-label="Breeding tips for ${nm}">${parts.join('\n')}</section>`;
 }
@@ -409,7 +412,7 @@ ${p.collab ? `<p class="note">${icon('info')}<span>Collaboration Pals come from 
       ? pairList(parentItems)
       : html`${pairList(parentItems.slice(0, LIMIT))}
 <details class="more"><summary>${icon('chevron')}<span>Show all ${parents.length.toLocaleString('en-US')} pairs</span></summary>${pairList(parentItems.slice(LIMIT))}</details>`}
-  <p class="muted small">Pairs are listed by Paldeck number. Each pair needs one male and one female. New to breeding? Read <a href="/guide/how-breeding-works/">how breeding power works</a>.</p>
+  <p class="muted small">Pairs are listed by Paldeck number. Each pair needs one male and one female. New to breeding? Read <a href="/guide/how-breeding-works/">how breeding power works</a> or the <a href="/guide/beginner-breeding/">beginner guide</a>.</p>
 </section>
 ${adSlot(config.ads.slots?.inContent)}
 <section id="offspring">
@@ -476,7 +479,7 @@ for (const page of content.pages(ctx)) {
   article(page.path, page.title, page.description, page.body, page.crumb, ld);
 }
 
-const guideCtx = { ...ctx, data, A, verification, palPath, dexLabel, EARLY_MAX_LEVEL, icon };
+const guideCtx = { ...ctx, data, A, verification, palPath, dexLabel, EARLY_MAX_LEVEL, icon, parentsOf };
 for (const page of guidePages(guideCtx)) {
   const ld = page.article ? [{
     '@context': 'https://schema.org', '@type': 'Article', headline: page.title, description: page.description,

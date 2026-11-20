@@ -21,7 +21,7 @@ export function pages({ config, meta, pals, counts, selfOnly, genderedRows, pair
   <li>One male and one female Pal assigned to the farm.</li>
   <li>A Cake in the farm's box. Each egg uses up one Cake.</li>
 </ul>
-<p>The egg then needs to be hatched in an incubator. For eggs made at a Breeding Farm, PalCalc's notes say the species is determined when the egg is produced.</p>
+<p>The egg then needs to be hatched in an incubator. For eggs made at a Breeding Farm, PalCalc's notes say the species is determined when the egg is produced. More on the farm and Cakes, including what we could not verify: <a href="/guide/breeding-farm-and-cakes/">Breeding Farm and Cakes</a>. Complete beginner? Start with <a href="/guide/beginner-breeding/">breeding for beginners</a>, and see <a href="/guide/breeding-combinations/">breeding combos</a> for finding a pair.</p>
 
 <h2>Breeding power: the hidden number</h2>
 <p>Every Pal has a hidden <strong>breeding power</strong> value. In the data used here it runs from ${Math.min(...pals.map((p) => p.power))} to ${Math.max(...pals.map((p) => p.power))}. Rare, late-game Pals have <em>low</em> numbers; common early Pals have <em>high</em> ones. Each Pal page on this site shows the value.</p>
@@ -107,7 +107,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 <ul>
   <li>When the data is imported, every one of the source's breeding rows is compared with the table this site uses, in both parent orders. The import stops if a single row disagrees.</li>
   <li>The automated tests recompute every result for regular Pals from breeding power using the rule described in our <a href="/guide/how-breeding-works/">guide</a>, and fail if any differ.</li>
-  <li>Sample results (for example Relaxaurus + Sparkit, the Katress and Wixen gender combos, and Penking + Bushi) were compared by hand with other 1.0 calculators and guides.</li>
+  <li>Sample results (for example Relaxaurus + Sparkit and the Katress and Wixen gender combos) were compared by hand with other 1.0 calculators and guides. Penking + Bushi is not in that group: our table gives Sibelyx, which matches the breeding power rule, but it is <strong>unverified</strong>: we have not checked it against other sources or in the live game.</li>
 </ul>
 <h2>What we don't have</h2>
 <ul>

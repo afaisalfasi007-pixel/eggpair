@@ -1,7 +1,7 @@
 // Build-time facts derived from the breeding table. Used by the guides and the
 // Pal pages; never shipped to the browser.
 
-import { recipeCounts, outcomes, parentsOf, planRoute } from './lib/breeding.mjs';
+import { recipeCounts, outcomes, parentsOf, planRoute, childOf } from './lib/breeding.mjs';
 
 /** "Early-game" Pals: non-collab Pals whose lowest wild level in the game data is this or lower. */
 export const EARLY_MAX_LEVEL = 10;
@@ -49,6 +49,17 @@ export function analyze(data) {
     return routeCache.get(target);
   }
 
+  /** Fewest steps to `target` if every wild-catchable Pal up to this wild level can be obtained. */
+  const capCache = new Map();
+  function routeWithCap(target, cap) {
+    const key = `${target}:${cap}`;
+    if (!capCache.has(key)) {
+      const start = pals.map((p, i) => i).filter((i) => catchable(i) && wildMin[i] <= cap);
+      capCache.set(key, planRoute(data, start, target));
+    }
+    return capCache.get(key);
+  }
+
   const byPower = pals.map((p, i) => i).sort((a, b) => pals[a].power - pals[b].power || pals[a].name.localeCompare(pals[b].name));
   const powerRank = new Array(n);
   byPower.forEach((i, k) => { powerRank[i] = k + 1; });
@@ -62,6 +73,7 @@ export function analyze(data) {
     catchable,
     easiestRecipes,
     routeFromEarly,
+    routeWithCap,
     byPower,
     powerRank,
     summary: {
@@ -75,4 +87,33 @@ export function analyze(data) {
       earlyPals: earlySet.length,
     },
   };
+}
+
+/**
+ * The short Anubis chain that published guides describe, checked against our own breeding
+ * table. Returns null if any step no longer gives the expected child, so a data update can
+ * never leave a wrong route on the site (the tests then fail and flag it).
+ */
+export const ANUBIS_CHAIN = [
+  ['Relaxaurus', 'Sparkit', 'Relaxaurus Lux'],
+  ['Relaxaurus Lux', 'Moldron Cryst', 'Jormuntide'],
+  ['Jormuntide', 'Blazehowl', 'Jormuntide Ignis'],
+  ['Relaxaurus Lux', 'Jormuntide Ignis', 'Anubis'],
+];
+
+export function shortAnubisRoute(data) {
+  const idx = (name) => data.pals.findIndex((p) => p.name === name);
+  const steps = [];
+  const made = new Set();
+  const starters = [];
+  for (const [a, b, c] of ANUBIS_CHAIN) {
+    const [ia, ib, ic] = [idx(a), idx(b), idx(c)];
+    if (ia < 0 || ib < 0 || ic < 0) return null;
+    const r = childOf(data, ia, ib);
+    if (r.child !== ic) return null;
+    for (const x of [ia, ib]) if (!made.has(x) && !starters.includes(x)) starters.push(x);
+    made.add(ic);
+    steps.push({ a: ia, b: ib, ga: null, gb: null, child: ic });
+  }
+  return { steps, starters };
 }
